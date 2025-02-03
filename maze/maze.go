@@ -3,7 +3,6 @@ package maze
 import (
 	"fmt"
 	"math/rand"
-	"time"
 )
 
 // Maze представляет лабиринт
@@ -48,7 +47,6 @@ func (m *Maze) fillWalls() {
 
 // generatePerfectMaze создает идеальный лабиринт
 func (m *Maze) generatePerfectMaze() {
-	rand.Seed(time.Now().UnixNano())
 
 	// Начальная точка (вход)
 	startX, startY := 1, 1
@@ -90,6 +88,49 @@ func (m *Maze) carvePassages(x, y int) {
 	}
 }
 
+func (m *Maze) Solve() bool {
+	// Начальная точка (вход)
+	startX, startY := 1, m.Height-1
+
+	// Рекурсивный поиск пути
+	if m.dfs(startX, startY) {
+		return true
+	}
+
+	return false
+}
+
+// dfs рекурсивно ищет путь от текущей точки до выхода
+func (m *Maze) dfs(x, y int) bool {
+	// Проверка, что текущая точка находится в пределах лабиринта
+	if x < 0 || x >= m.Width || y < 0 || y >= m.Height {
+		return false
+	}
+
+	// Проверка, что текущая точка является путем и не была посещена
+	if m.Grid[x][y] != 1 {
+		return false
+	}
+
+	// Если текущая точка является выходом, возвращаем true
+	if x == m.Width-2 && y == 0 {
+		m.Grid[x][y] = 2 // Помечаем выход
+		return true
+	}
+
+	// Помечаем текущую точку как часть пути
+	m.Grid[x][y] = 2
+
+	// Рекурсивно ищем путь в четырех направлениях
+	if m.dfs(x+1, y) || m.dfs(x-1, y) || m.dfs(x, y+1) || m.dfs(x, y-1) {
+		return true
+	}
+
+	// Если путь не найден, снимаем пометку
+	m.Grid[x][y] = 1
+	return false
+}
+
 func (m *Maze) createEnterAndExit() {
 	m.Grid[1][m.Height-1] = 1
 	m.Grid[m.Width-2][0] = 1
@@ -101,6 +142,8 @@ func (m *Maze) Print() {
 		for _, cell := range row {
 			if cell == 1 {
 				fmt.Print("  ") // Путь
+			} else if cell == 2 {
+				fmt.Print("**")
 			} else {
 				fmt.Print("██") // Стена
 			}
